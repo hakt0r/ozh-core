@@ -13,9 +13,7 @@ Modules always live in a *folder* and follow a simple *$mod/$mod* convention as 
 Installation
 ------------
 
-    repo="https://raw.githubusercontent.com/hakt0r/ozh-core/master"
-    cd; $(which wget) -Oozcore "$repo/core"; . ./ozcore
-    ozh install +repo "$repo" core
+    ( repo="https://raw.githubusercontent.com/hakt0r/ozh-core/master"; dest="./.config/ozh/core"; cd && mkdir -p "$dest" && echo "$repo" > "$dest/repo" && $(which wget) -O "$dest/core" "$repo/core" && OZH_INSTALL=core . "$dest/core" printenv && _install_core; )
 
 Basic Usage
 -----------
@@ -23,9 +21,9 @@ Basic Usage
 
 ### Install a module
 
-    oz install [+-repo $repo] [+-lib] [+-only] $mod
+    oz install [(+|-)[lib/only/prefix $prefix]] $mod
 
-* *+repo* will force a repo url and save the $OZH/$mod/repo file
+* *+prefix * add a prefix to the following modules as in: $prefix/$mod
 
 * *+lib * will add the following modules to the $OZH/libs file, unless they exist already.
 
@@ -35,7 +33,6 @@ Basic Usage
 
     oz install +lib shell # will be expanded to shell/shell
     oz install +lib shell/abstracts
-
 
 ### View or edit ozh-stuff
 

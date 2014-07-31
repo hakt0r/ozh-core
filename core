@@ -46,78 +46,67 @@ _sanitize_path(){
   export PATH=$(printf "$new" | tr '\n' : | sed 's/^.//;q'); }
 
 _install(){
-  local prefix=
-  local lib=false
-  local only=false
-  local mod="core"
-  local repo="$OZH_REPO"
-  local old_repo=
+  local repo; local url; local dir; local file; local dirfile; local banner
+  local lib=false; local only=false; local prefix=false; local PREFIX; local mod="core"
   local stack="$stack$bred $R"
   _save_to(){ ( pipe_progress > "$1" ) 2>&1 | tr -d '\n' | tr . ' '; }
-  _retrieve(){ (
-    if match "$1" "@http"; then
-      wget -qO- "$1" 2>/dev/null | _save_to "$2"; return $?
-    else cat "$1" | _save_to "$2"; return $?; fi; ); }
+  _retrieve(){ match "$1" "@http" &&
+    { /usr/bin/wget -qO- "$1" | _save_to "$2"; return $?; }
+    { cat "$1" | _save_to "$2"; return $?; }; }
   while [ -n "$1" ] && { mod="$1"; shift; }; do
-    [ "@$mod" = "@+repo" ]   && { repo="$1";   shift; continue; }
-    [ "@$mod" = "@+prefix" ] && { prefix="$1"; shift; continue; }
-    [ "@$mod" = "@-lib"  -o "@$mod" = "@+lib"  ] && { lib=$( echo $mod|sed 's/-.*/false/;s/\+.*/true/'); continue; }
-    [ "@$mod" = "@-only" -o "@$mod" = "@+only" ] && { only=$(echo $mod|sed 's/-.*/false/;s/\+.*/true/'); continue; }
-    [ -n "$prefix" ] && mod="$prefix/$mod"
-    # assume mod/mod if no '/' is present
-    match "$mod" "/" || mod="$mod/$mod"
-    local dir=$(dirname $mod)
-    local tmp="/tmp/$dir.$(date +%s)"
-    local file=$(basename $mod)
-    # read custom repo
-    [ -f "$OZH/$dir/repo" ] && repo=$(cat "$OZH/$dir/repo")
-    local banner="$(
-      printf "${bred}i$($lib && printf l || printf ' '
-      $only && printf o || printf ' ')$R $stack $byellow$black $file $R \x1b[100D\x1b[30C$bgreen$white$bold")";
-    printf "$banner"
-    mkdir -p "$OZH/$dir" && printf "d"
+    match "$mod" "@.prefix" && { prefix=$( echo $mod|sed 's/-.*/false/;s/\+.*/true/'); $prefix && PREFIX=$1; shift; continue; }
+    match "$mod" "@.lib"    && { lib=$( echo $mod|sed 's/-.*/false/;s/\+.*/true/'); continue; }
+    match "$mod" "@.only"   && { only=$(echo $mod|sed 's/-.*/false/;s/\+.*/true/'); continue; }
+    file=$(basename $mod); $prefix && mod="$PREFIX/$mod"
+    match "$mod" "http" \
+      && { # http/s handler (busybox wget does not support https! FIXME)
+        url="$mod"; dir=$(basename $mod)
+        mkdir -p "$OZH/$dir"                            # create module dir
+        echo "$mod" | sed 's/\/.*//' > "$OZH/$dir/repo" # add repo entry
+    } || { # filesystem handler
+      match "$mod" "/" || mod="$mod/$mod"
+      dir=$(basename $(dirname $mod))
+      [ -f "$OZH/$dir/repo" ] \
+        && { url="$(cat "$OZH/$dir/repo")/$file"; } \
+        || { [ -d "$(dirname $mod)" -a -f "$mod" ] \
+          && {
+            url="$mod";
+            mkdir -p "$OZH/$dir"              # create module dir
+            dirname "$mod" > "$OZH/$dir/repo" # add repo entry
+            cat "$OZH/$dir/repo"
+           } \
+          || { printf "not a mod, not in repo: $dir $file $mod"; _fail; continue; }; }; }
+    dirfile="$dir/$file"
+    # cache and print banner
+    banner="$(printf "${bred}i$($lib && printf l || printf ' '; $only && printf o || printf ' ')$R $stack $byellow$black $file $R \x1b[100D\x1b[30C$bgreen$white$bold")"; printf "$banner "
     # fetch the module
-    _retrieve "$repo/$mod" "$tmp" || { _fail; return 1; }
-    # install the module
-    printf "$bblue$white$bold"
-    cp "$tmp" "$OZH/$mod" && printf i; rm "$tmp" && printf t;
-    # add repo if custom repo is set 
-    [ "$repo" = "$OZH_REPO" ] || { echo "$repo" > "$OZH/$dir/repo"; printf "r"; }
+    _retrieve "$url" "$OZH/$dirfile" || { _fail; continue; }
     # if the lib flag is raised, add module to $OZH/libs
-    $lib && { printf "l"; grep -q "^$mod\$" "$OZH/libs" 2>/dev/null || echo "$mod" >> "$OZH/libs"; }
-    # unless the only flag is raised, source the module
+    $lib && { printf "${byellow}l"; grep -q "^$dirfile\$" "$OZH/libs" 2>/dev/null || echo "$dirfile" >> "$OZH/libs"; }
+    # unless the only flag is raised, source the module, execute hooks
     $only && printf o || {
-      OZH_INSTALL="$mod" OZH_REQUIRE="$mod" . "$OZH/$mod" && printf "s"
-        is_set "_install_$file" && {
-        printf h; _branch "deps"
-        _install_$file; printf "$banner";
-      }; }
+      printf "$bgreen(%s)s" $(cat "$OZH/$dirfile" | wc -c); local OZH_INSTALL="$dirfile"; local  OZH_REQUIRE="$dirfile"; . "$OZH/$dirfile"
+        is_set "_install_$file" && { printf h; _branch "deps"; _install_$file; printf "$banner"; }; }
     _done
   done; return 0; }
 
 _require(){
-  local mod="$1" # printf "$bgreen $(basename $mod) $R "
-  match "@$mod" "/" || mod="$mod/$mod"; mod="$OZH/$mod"
+  local mod="$1"; match "@$mod" "/" || mod="$mod/$mod"; mod="$OZH/$mod"
   local OZH_REQUIRE="$mod"; [ -f "$mod" ] && . "$mod"; }
 
-[ -n "$OZH_INSTALL" ] && {
-  _install_core(){  oz install +lib core/os shell feed net uht; }
-  _install_utils(){ oz install xrt +lib core/util; }; }
+[ -n "$OZH_INSTALL" ] && { _install_core(){  oz install +lib core/andcrs core/andlib; };  }
 
 _env(){
   export OZH;
-  export OZH_REPO;
   export USER=$(whoami);
   export HOME=$(homeof $USER);
   export HOST=$(hostname 2>/dev/null)
   local p=;local d="$HOME/.config\n/data/local\n$HOME\n/etc"
   while [ -z "$OZH" -a -n "$d" ]; do p=$(printf "$d"|sed q); d=$(printf "$d"|sed 1d); [ -d "$p" ] && OZH="$p/ozh"; done
   [ -n "$OZH" -a ! -f $OZH -a -d "$OZH" ] || mkdir -p "$OZH"
-  [ -z "$OZH_REPO" -a -f "$OZH/repo" ] && OZH_REPO=$(cat "$OZH/repo")
-  [ -z "$OZH_REPO" ] && OZH_REPO="http://localhost/ozh-core"
   _sanitize_path; }
 
-_printenv() { for k in OZH OZH_REPO USER HOME PATH;do
+_printenv() { for k in OZH USER HOME PATH;do
   printf "$bblack $k $R\x1b[100D\x1b[10C$bblue %s $R\n" $(eval echo -n \$$k); done
   printf "$bblack LIBS $R\x1b[100D\x1b[9C$(cat $OZH/libs 2>/dev/null|sort|awk '
     BEGIN{FS="/"}{ if(p!=$1){p=$1;printf " ["p"] ";s=""};if($2!=p){printf s$2;s=","}}')\n"; }
