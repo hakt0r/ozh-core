@@ -1,0 +1,35 @@
+#!/bin/sh
+
+_copyright(){ echo "
+  ozh lightweight shell extensions
+  2008-2014 - anx @ ulzq de (Sebastian Glaser)
+  Licensed under GNU GPL v3"; }
+_license(){ echo "
+  ozh is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2, or (at your option)
+  any later version.
+
+  ozh is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this software; see the file COPYING.  If not, write to
+  the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+  Boston, MA 02111-1307 USA
+
+  http://www.gnu.org/licenses/gpl.html"; }
+
+## androcurses - 0004
+test -z "$TERM" || { E="\x1b["; R=$E"0m"; CL=$E"0E"$E"0J"; RN=$E"0m\n"; bold=$E"1m"; black=$E"30m"; red=$E"31m"; green=$E"32m"; yellow=$E"33m"; blue=$E"34m"; magenta=$E"35m"; cyan=$E"37m"; white=$E"38m"; bblack=$E"40m";bred=$E"41m";bgreen=$E"42m";byellow=$E"43m";bblue=$E"44m";bmagenta=$E"45m";bcyan=$E"47m";bwhite=$E"48m";}
+echo | busybox pipe_progress >/dev/null 2>&1 && { pipe_progress(){ printf "$bgreen $R" >&2; cat - | busybox pipe_progress; }; } || { pipe_progress(){ awk '{print $0;c+=length($0);if(l<c%1024){l=c;printf "'"$bgreen $R"'"|"cat >&2"}}'; }; }
+is_set(){ type "$1" >/dev/null 2>&1; }
+_done(){ printf "$R\x1b[9999G\x1b[4D $bgreen$black ok $RN" >&2; }
+_fail(){ printf "$R\x1b[9999G\x1b[6D $bred fail $RN" >&2; }
+_branch(){ printf "$R\x1b[9999G\x1b[$(( $(printf "$1"|wc -c) + 2))D $byellow$black $1 $RN" >&2; }
+_bail(){ local a="$1"; shift 1; printf "$bred error $R $magenta$a$R $yellow$@$RN" >&2; }
+_success(){ printf "$bgreen ok $R $yellow$@$RN" >&2; }
+_action_(){ local a="$1";shift; printf "$byellow$black $a $R $@" >&2; }
+_action (){ _action_ $@; echo >&2; }

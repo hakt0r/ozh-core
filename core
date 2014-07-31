@@ -1,0 +1,162 @@
+#!/bin/sh
+
+_copyright(){ echo "
+  ozh lightweight shell OZHtensions
+  2008-2014 - anx @ ulzq de (Sebastian Glaser)
+  Licensed under GNU GPL v3"; }
+_license(){ echo "
+  ozh is free software; you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation; either version 2, or (at your option)
+  any later version.
+
+  ozh is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this software; see the file COPYING.  If not, write to
+  the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+  Boston, MA 02111-1307 USA
+
+  http://www.gnu.org/licenses/gpl.html"; }
+
+# taken from andcrs and andlib
+test -z "$TERM" || { E="\x1b["; R=$E"0m"; CL=$E"0E"$E"0J"; RN=$E"0m\n"; bold=$E"1m"; black=$E"30m"; red=$E"31m"; green=$E"32m"; yellow=$E"33m"; blue=$E"34m"; magenta=$E"35m"; cyan=$E"37m"; white=$E"38m"; bblack=$E"40m";bred=$E"41m";bgreen=$E"42m";byellow=$E"43m";bblue=$E"44m";bmagenta=$E"45m";bcyan=$E"47m";bwhite=$E"48m";}
+is_set(){ type "$1" >/dev/null 2>&1; }; _done(){ printf "$R\x1b[9999G\x1b[4D $bgreen$black ok $RN" >&2; }; _fail(){ printf "$R\x1b[9999G\x1b[6D $bred fail $RN" >&2; }
+_branch(){ printf "$R\x1b[9999G\x1b[$(( $(printf "$1"|wc -c) + 2))D $byellow$black $1 $RN" >&2; }
+echo | busybox pipe_progress >/dev/null 2>&1 && { pipe_progress(){ printf "$bgreen $R" >&2; cat - | busybox pipe_progress; }; } || { pipe_progress(){ awk '{print $0;c+=length($0);if(l<c%1024){l=c;printf "'"$bgreen $R"'"|"cat >&2"}}'; }; }
+homeof(){ local dir=; which getent >/dev/null 2>&1 && dir=$(getent passwd "$1" 2>/dev/null | cut -d: -f6); [ -z "$dir" -a "$1" = "root" -a -d /root ] && dir="/root"; [ -z "$dir" -a -d "/home/$1" ] && dir="/home/$1"; echo $dir; }
+match(){ echo "@$1" | grep -q "$2"; }
+
+# wrap around busybox commands
+[ -z "$OZH" ] && eval "$(
+  busybox 2>&1 |
+  busybox awk '
+    BEGIN{ RS=",";blacklist["[["]=1;blacklist["ls"]=1;blacklist["time"]=1}
+    {gsub(/[\t \n]/,"",$0)}
+    /\[\[/{p=1}
+    (p&&!blacklist[$1]==1&&$0!=""){
+      printf "alias %s=\"busybox %s\";",$0,$0}')"
+
+_sanitize_path(){
+  local new=""; local paths="./bin\n$HOME/bin\n$OZH/bin\n/usr/local/bin\n/usr/local/sbin\n/usr/local/libexec\n/opt/bin\n/opt/sbin\n/opt/libexec\n/usr/bin\n/usr/sbin\n/usr/libexec\n/sbin\n/bin\n/libexec\n/system/bin\n/system/sbin\n/system/xbin\n$(echo $PATH|tr : '\n')"
+  for p in $(printf "$paths");do test -d "$p" && { match "$new" "^@$p\$" || { new="$new\n$p"; }; }; done
+  export PATH=$(printf "$new" | tr '\n' : | sed 's/^.//;q'); }
+
+_install(){
+  local prefix=
+  local lib=false
+  local only=false
+  local mod="core"
+  local repo="$OZH_REPO"
+  local old_repo=
+  local stack="$stack$bred $R"
+  _save_to(){ ( pipe_progress > "$1" ) 2>&1 | tr -d '\n' | tr . ' '; }
+  _retrieve(){ (
+    if match "$1" "@http"; then
+      wget -qO- "$1" 2>/dev/null | _save_to "$2"; return $?
+    else cat "$1" | _save_to "$2"; return $?; fi; ); }
+  while [ -n "$1" ] && { mod="$1"; shift; }; do
+    [ "@$mod" = "@+repo" ]   && { repo="$1";   shift; continue; }
+    [ "@$mod" = "@+prefix" ] && { prefix="$1"; shift; continue; }
+    [ "@$mod" = "@-lib"  -o "@$mod" = "@+lib"  ] && { lib=$( echo $mod|sed 's/-.*/false/;s/\+.*/true/'); continue; }
+    [ "@$mod" = "@-only" -o "@$mod" = "@+only" ] && { only=$(echo $mod|sed 's/-.*/false/;s/\+.*/true/'); continue; }
+    [ -n "$prefix" ] && mod="$prefix/$mod"
+    # assume mod/mod if no '/' is present
+    match "$mod" "/" || mod="$mod/$mod"
+    local dir=$(dirname $mod)
+    local tmp="/tmp/$dir.$(date +%s)"
+    local file=$(basename $mod)
+    # read custom repo
+    [ -f "$OZH/$dir/repo" ] && repo=$(cat "$OZH/$dir/repo")
+    local banner="$(
+      printf "${bred}i$($lib && printf l || printf ' '
+      $only && printf o || printf ' ')$R $stack $byellow$black $file $R \x1b[100D\x1b[30C$bgreen$white$bold")";
+    printf "$banner"
+    mkdir -p "$OZH/$dir" && printf "d"
+    # fetch the module
+    _retrieve "$repo/$mod" "$tmp" || { _fail; return 1; }
+    # install the module
+    printf "$bblue$white$bold"
+    cp "$tmp" "$OZH/$mod" && printf i; rm "$tmp" && printf t;
+    # add repo if custom repo is set 
+    [ "$repo" = "$OZH_REPO" ] || { echo "$repo" > "$OZH/$dir/repo"; printf "r"; }
+    # if the lib flag is raised, add module to $OZH/libs
+    $lib && { printf "l"; grep -q "^$mod\$" "$OZH/libs" 2>/dev/null || echo "$mod" >> "$OZH/libs"; }
+    # unless the only flag is raised, source the module
+    $only && printf o || {
+      OZH_INSTALL="$mod" OZH_REQUIRE="$mod" . "$OZH/$mod" && printf "s"
+        is_set "_install_$file" && {
+        printf h; _branch "deps"
+        _install_$file; printf "$banner";
+      }; }
+    _done
+  done; return 0; }
+
+_require(){
+  local mod="$1" # printf "$bgreen $(basename $mod) $R "
+  match "@$mod" "/" || mod="$mod/$mod"; mod="$OZH/$mod"
+  local OZH_REQUIRE="$mod"; [ -f "$mod" ] && . "$mod"; }
+
+[ -n "$OZH_INSTALL" ] && {
+  _install_core(){  oz install +lib core/os shell feed net uht; }
+  _install_utils(){ oz install xrt +lib core/util; }; }
+
+_env(){
+  export OZH;
+  export OZH_REPO;
+  export USER=$(whoami);
+  export HOME=$(homeof $USER);
+  export HOST=$(hostname 2>/dev/null)
+  local p=;local d="$HOME/.config\n/data/local\n$HOME\n/etc"
+  while [ -z "$OZH" -a -n "$d" ]; do p=$(printf "$d"|sed q); d=$(printf "$d"|sed 1d); [ -d "$p" ] && OZH="$p/ozh"; done
+  [ -n "$OZH" -a ! -f $OZH -a -d "$OZH" ] || mkdir -p "$OZH"
+  [ -z "$OZH_REPO" -a -f "$OZH/repo" ] && OZH_REPO=$(cat "$OZH/repo")
+  [ -z "$OZH_REPO" ] && OZH_REPO="http://localhost/ozh-core"
+  _sanitize_path; }
+
+_printenv() { for k in OZH OZH_REPO USER HOME PATH;do
+  printf "$bblack $k $R\x1b[100D\x1b[10C$bblue %s $R\n" $(eval echo -n \$$k); done
+  printf "$bblack LIBS $R\x1b[100D\x1b[9C$(cat $OZH/libs 2>/dev/null|sort|awk '
+    BEGIN{FS="/"}{ if(p!=$1){p=$1;printf " ["p"] ";s=""};if($2!=p){printf s$2;s=","}}')\n"; }
+
+_reload(){ . $OZH/core/core libs; }
+_update(){ oz install +only core; oz reload; }
+_set(){ local k=$1;shift; [ -d "$OZH" ] && { echo $@ > "$OZH/$k"; }; }
+_get(){ local k=$1;shift; [ -d "$OZH" -a -f "$OZH/$k" ] && cat "$OZH/$k"; }
+_edit(){ local k=$1;shift; [ -d "$OZH" -a -f "$OZH/$k" ] && $EDITOR "$OZH/$k"; }
+_default(){ test -z "$1" || export "$1"="$2"; }
+
+_help(){ opt="$bblack$white"; arg="$bblue"; cmd="$byellow$black"
+  printf "$bred"; _copyright; printf "$RN";
+  printf "$cmd ozh $R              $opt command $R
+  $cmd install        $R $opt -only -lib $arg module $opt more modules $R
+  $cmd remove         $R $opt -lib $arg module $opt more modules $R
+  $cmd enable/disable $R $arg module $R
+  $cmd get/edit       $R $arg key $R
+  $cmd set            $R $arg key $opt val $R
+  $cmd env/printenv   $RN"; }
+
+_boot(){
+  _boot_widget(){ printf "$bold$bgreen$white$1 $R"; }
+  _boot_widget_red(){ printf "$bred$(basename $1) $R"; }
+  _boot_cat(){ eval "$(
+    printf "_boot_widget_red %s\n" $@; echo 'printf "\x1b[100D"; '
+    printf "%s\n" $@ | awk '{ s=$0; sub(".*\/","",s)
+      printf "\n%s\n_boot_widget %s\n_%s(){\n",p,s,s; p=sprintf("\n}; _%s || echo %s;\n",s,s)
+      while((getline line < $0 > 0 )){print line}}END{printf p}';)"; }
+  _boot_cat $(printf "$OZH/%s\n" $(cat "$OZH/libs";); ); echo; }
+
+ozh(){ test -z "$1" || {
+  test -d "$OZH" 2>/dev/null || _env
+  [ -f "$OZH/libs" ] && { _boot "$OZH/libs"; }
+  local CMD=$1; shift;
+  type "_$CMD" >/dev/null 2>&1 && "_$CMD" $@ || {
+  type "$CMD"  >/dev/null 2>&1 && "$CMD"  $@; }
+  return $?; }; }
+
+oz(){ local CMD=$1; shift; type "_$CMD" >/dev/null 2>&1 && "_$CMD" $@; }
+
+[ -z "$OZH_REQUIRE" ] && ozh $@
