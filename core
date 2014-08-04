@@ -104,12 +104,36 @@ _require(){
     fi
   oz install +lib core/andcrs core/andlib; };  }
 
+_lib(){
+  local libpath="$OZH/libs"; local cmd="_lib_$1"; shift;
+  _lib_boot(){
+    _boot_widget(){ printf "$bold$bgreen$white$1 $R"; }
+    _boot_widget_red(){ printf "$bred$(basename $1) $R"; }
+    _boot_cat(){ eval "$(
+      printf "_boot_widget_red %s\n" $@; echo 'printf "\x1b[100D"; '
+      printf "%s\n" $@ | awk '{ s=$0; sub(".*\/","",s)
+        printf "\n%s\n_boot_widget %s\n_%s(){\n",p,s,s; p=sprintf("\n}; _%s || echo %s;\n",s,s)
+        while((getline line < $0 > 0 )){print line}}END{printf p}';)"; }
+    _boot_cat $(printf "$OZH/%s\n" $(cat "$OZH/libs";); ); echo; }
+  _lib_add(){ grep -q  "^$1\$" "$libpath" 2>/dev/null || echo "$1" >> "$libpath"; }
+  _lib_del(){ echo "$(grep -v "^$1\$" "$libpath")" > "$libpath"; }
+  _lib_edit(){ _edit "libs"; }; _lib_get(){ _get "libs"; }; _lib_path(){ echo "$libpath"; }
+  is_set "$cmd" && "$cmd" $@; }
+
+_hook(){
+  local lib="$OZH/hook" cmd="_hook_$1"; shift;
+  local hook="$1" name="$2" cache="$lib/$1/.cache" dir="$lib/$1" file="$lib/$1/$2"; shift;
+  _hook_run(){ [ ! -f "$cache" ] && { mkdir -p "$dir"; cat "$dir/"* > "$cache"; }; . "$cache" $@; }
+  _hook_get(){  shift; cat "$file"; }
+  _hook_set(){  shift; mkdir -p "$dir"; rm "$cache" 2>/dev/null; echo "$@" > "$file"; }
+  _hook_del(){  shift; mkdir -p "$dir"; rm "$cache" 2>/dev/null; rm "$file" 2>/dev/null; }
+  _hook_edit(){ shift; mkdir -p "$dir"; rm "$cache" 2>/dev/null; 
+  oz edit "$file"; }
+  is_set "$cmd" && "$cmd" $@; }
+
 _env(){
-  export OZH;
-  export USER=$(whoami);
-  export HOME=$(homeof $USER);
-  export HOST=$(hostname 2>/dev/null)
-  local p=;local d="$HOME/.config\n/data/local\n$HOME\n/etc"
+  export OZH USER=$(whoami) HOME=$(homeof $USER) HOST=$(hostname 2>/dev/null)
+  local p= d="$HOME/.config\n/data/local\n$HOME\n/etc"
   while [ -z "$OZH" -a -n "$d" ]; do p=$(printf "$d"|sed q); d=$(printf "$d"|sed 1d); [ -d "$p" ] && OZH="$p/ozh"; done
   [ -n "$OZH" -a ! -f $OZH -a -d "$OZH" ] || mkdir -p "$OZH"
   _sanitize_path; }
@@ -123,7 +147,7 @@ _reload(){ . $OZH/core/core libs; }
 _update(){ oz install +only core; oz reload; }
 _set(){ local k=$1;shift; [ -d "$OZH" ] && { echo $@ > "$OZH/$k"; }; }
 _get(){ local k=$1;shift; [ -d "$OZH" -a -f "$OZH/$k" ] && cat "$OZH/$k"; }
-_edit(){ local k=$1;shift; [ -d "$OZH" -a -f "$OZH/$k" ] && $EDITOR "$OZH/$k"; }
+_edit(){ local k=$1;shift; [ -f "$k" ] && { $EDITOR "$k"; return; }; [ -d "$OZH" -a -f "$OZH/$k" ] && $EDITOR "$OZH/$k"; }
 _default(){ test -z "$1" || export "$1"="$2"; }
 
 _help(){ opt="$bblack$white"; arg="$bblue"; cmd="$byellow$black"
@@ -136,19 +160,9 @@ _help(){ opt="$bblack$white"; arg="$bblue"; cmd="$byellow$black"
   $cmd set            $R $arg key $opt val $R
   $cmd env/printenv   $RN"; }
 
-_boot(){
-  _boot_widget(){ printf "$bold$bgreen$white$1 $R"; }
-  _boot_widget_red(){ printf "$bred$(basename $1) $R"; }
-  _boot_cat(){ eval "$(
-    printf "_boot_widget_red %s\n" $@; echo 'printf "\x1b[100D"; '
-    printf "%s\n" $@ | awk '{ s=$0; sub(".*\/","",s)
-      printf "\n%s\n_boot_widget %s\n_%s(){\n",p,s,s; p=sprintf("\n}; _%s || echo %s;\n",s,s)
-      while((getline line < $0 > 0 )){print line}}END{printf p}';)"; }
-  _boot_cat $(printf "$OZH/%s\n" $(cat "$OZH/libs";); ); echo; }
-
 ozh(){ test -z "$1" || {
   test -d "$OZH" 2>/dev/null || _env
-  [ -f "$OZH/libs" ] && { _boot "$OZH/libs"; }
+  [ -f "$OZH/libs" ] && { _lib boot; }
   local CMD=$1; shift;
   type "_$CMD" >/dev/null 2>&1 && "_$CMD" $@ || {
   type "$CMD"  >/dev/null 2>&1 && "$CMD"  $@; }
