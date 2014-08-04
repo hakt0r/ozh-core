@@ -1,0 +1,124 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>OZH by hakt0r</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+  </head>
+  <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/hakt0r/ozh-core">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/hakt0r/ozh-core/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/hakt0r/ozh-core/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
+
+    <div class="wrapper">
+
+      <section>
+        <div id="title">
+          <h1>OZH</h1>
+          <p>ozh reboot - core module</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/hakt0r">hakt0r</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+        </div>
+
+        <h1>
+<a name="ozh-core" class="anchor" href="#ozh-core"><span class="octicon octicon-link"></span></a>ozh-core</h1>
+
+<ul>
+<li>ozh lightweight shell extensions</li>
+<li>ozh reboot - core module</li>
+<li>2008-2014 - anx @ ulzq de (Sebastian Glaser)</li>
+<li>Licensed under GNU GPL v3</li>
+</ul><p>ozh is a package manager for various un+x-style shells. It's aim is to sanitize the <strong>environment</strong> and provide tools to install and depend upon <strong>modules</strong>.</p>
+
+<p>Modules always live in a <em>folder</em> and follow a simple <em>$mod/$mod</em> convention as the entry-point.</p>
+
+<h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<pre><code>( repo="https://raw.githubusercontent.com/hakt0r/ozh-core/master"; dest="./.config/ozh/core"; cd &amp;&amp; mkdir -p "$dest" &amp;&amp; echo "$repo" &gt; "$dest/repo" &amp;&amp; $(which wget) -O "$dest/core" "$repo/core" &amp;&amp; OZH_INSTALL=core . "$dest/core" printenv &amp;&amp; _install_core; )
+</code></pre>
+
+<h2>
+<a name="basic-usage" class="anchor" href="#basic-usage"><span class="octicon octicon-link"></span></a>Basic Usage</h2>
+
+<h3>
+<a name="install-a-module" class="anchor" href="#install-a-module"><span class="octicon octicon-link"></span></a>Install a module</h3>
+
+<pre><code>oz install [(+|-)[lib/only/prefix $prefix]] $mod
+</code></pre>
+
+<ul>
+<li><p>*+prefix * add a prefix to the following modules as in: $prefix/$mod</p></li>
+<li><p>*+lib * will add the following modules to the $OZH/libs file, unless they exist already.</p></li>
+<li><p><em>-only</em> will inhibit sourcing the following modules after install. Hooks will not be executed, hence install scripts will not run.</p></li>
+</ul><h4>
+<a name="examples" class="anchor" href="#examples"><span class="octicon octicon-link"></span></a>Examples</h4>
+
+<pre><code>oz install +lib shell # will be expanded to shell/shell
+oz install +lib shell/abstracts
+</code></pre>
+
+<h3>
+<a name="view-or-edit-ozh-stuff" class="anchor" href="#view-or-edit-ozh-stuff"><span class="octicon octicon-link"></span></a>View or edit ozh-stuff</h3>
+
+<h4>
+<a name="get-ozhlibs" class="anchor" href="#get-ozhlibs"><span class="octicon octicon-link"></span></a>Get $OZH/libs</h4>
+
+<pre><code>oz get libs
+</code></pre>
+
+<h4>
+<a name="set-ozhlibs-to-corecore" class="anchor" href="#set-ozhlibs-to-corecore"><span class="octicon octicon-link"></span></a>Set $OZH/libs to 'core/core'</h4>
+
+<pre><code>oz set libs 'core/core'
+</code></pre>
+
+<h4>
+<a name="open-editor-for-" class="anchor" href="#open-editor-for-"><span class="octicon octicon-link"></span></a>Open $EDITOR for ...</h4>
+
+<pre><code>oz edit libs
+oz edit shell/motd
+</code></pre>
+
+<h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>ozh is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2, or (at your option)
+any later version.</p>
+
+<p>ozh is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.</p>
+
+<p>You should have received a copy of the GNU General Public License
+along with this software; see the file COPYING.  If not, write to
+the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+Boston, MA 02111-1307 USA</p>
+      </section>
+
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
