@@ -50,8 +50,8 @@ _install(){
   local lib=false; local only=false; local prefix=false; local PREFIX; local mod="core"
   local stack="$stack$bred $R"
   _save_to(){ ( pipe_progress > "$1" ) 2>&1 | tr -d '\n' | tr . ' '; }
-  _retrieve(){ match "$1" "@http" &&
-    { /usr/bin/wget -qO- "$1" | _save_to "$2"; return $?; }
+  _retrieve(){
+    match "$1" "@http" && { curl "$1" 2>/dev/null | _save_to "$2"; printf $(du $2|awk '{print $1}'); return $?; }
     { cat "$1" | _save_to "$2"; return $?; }; }
   while [ -n "$1" ] && { mod="$1"; shift; }; do
     match "$mod" "@.prefix" && { prefix=$( echo $mod|sed 's/-.*/false/;s/\+.*/true/'); $prefix && PREFIX=$1; shift; continue; }
@@ -59,10 +59,10 @@ _install(){
     match "$mod" "@.only"   && { only=$(echo $mod|sed 's/-.*/false/;s/\+.*/true/'); continue; }
     file=$(basename $mod); $prefix && mod="$PREFIX/$mod"
     match "$mod" "http" \
-      && { # http/s handler (busybox wget does not support https! FIXME)
+      && {
         url="$mod"; dir=$(basename $mod)
-        mkdir -p "$OZH/$dir"                            # create module dir
-        echo "$mod" | sed 's/\/.*//' > "$OZH/$dir/repo" # add repo entry
+        mkdir -p "$OZH/$dir"                                 # create module dir
+        echo "$mod" | sed 's/\/[^\/]*$//' > "$OZH/$dir/repo" # add repo entry
     } || { # filesystem handler
       match "$mod" "/" || mod="$mod/$mod"
       dir=$(basename $(dirname $mod))
@@ -94,7 +94,15 @@ _require(){
   local mod="$1"; match "@$mod" "/" || mod="$mod/$mod"; mod="$OZH/$mod"
   local OZH_REQUIRE="$mod"; [ -f "$mod" ] && . "$mod"; }
 
-[ -n "$OZH_INSTALL" ] && { _install_core(){  oz install +lib core/andcrs core/andlib; };  }
+[ -n "$OZH_INSTALL" ] && { _install_core(){
+  which curl >/dev/null 2>&1 ||
+    if [ -d "/system" ];then # arm-android
+      local o="/system/xbin"; [ -d "$o" ] || o=; o="/system/bin"; [ -d "$o" ] || o=
+      [ -z "$o" ] || { mount -o remount,rw /system;
+      # wget -O "/system/xbin/curl" "http://curl.haxx.se/gknw.net/7.34.0/dist-android/curl-7.34.0-rtmp-ssh2-ssl-zlib-static-bin-android.tar.gz";
+    }
+    fi
+  oz install +lib core/andcrs core/andlib; };  }
 
 _env(){
   export OZH;
@@ -149,3 +157,4 @@ ozh(){ test -z "$1" || {
 oz(){ local CMD=$1; shift; type "_$CMD" >/dev/null 2>&1 && "_$CMD" $@; }
 
 [ -z "$OZH_REQUIRE" ] && ozh $@
+
