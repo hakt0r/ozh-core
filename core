@@ -127,8 +127,7 @@ _hook(){
   _hook_get(){  shift; cat "$file"; }
   _hook_set(){  shift; mkdir -p "$dir"; rm "$cache" 2>/dev/null; echo "$@" > "$file"; }
   _hook_del(){  shift; mkdir -p "$dir"; rm "$cache" 2>/dev/null; rm "$file" 2>/dev/null; }
-  _hook_edit(){ shift; mkdir -p "$dir"; rm "$cache" 2>/dev/null; 
-  oz edit "$file"; }
+  _hook_edit(){ shift; mkdir -p "$dir"; rm "$cache" 2>/dev/null; oz edit "$file"; }
   is_set "$cmd" && "$cmd" $@; }
 
 _env(){
