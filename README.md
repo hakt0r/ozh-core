@@ -37,12 +37,9 @@ Basic Usage
 
 ### View or edit ozh-stuff
 
-    # Get $OZH/libs
-    oz get libs
-    # Set $OZH/libs to 'core/core'
-    oz set libs 'core/core'
-    # Open $EDITOR for ...
-    oz edit libs
+    oz get libs                           # get $OZH/libs
+    oz set libs 'core/core'               # set $OZH/libs to 'core/core'
+    oz edit libs                          # open $EDITOR for ...
     oz edit shell/repo
 
 
