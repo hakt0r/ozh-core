@@ -1,7 +1,7 @@
 ozh-core
 ========
+**ozh *lightweight shell extensions***
 
-* ozh lightweight shell extensions
 * ozh reboot - core module
 * 2008-2014 - anx @ ulzq de (Sebastian Glaser)
 * Licensed under GNU GPL v3
@@ -21,13 +21,15 @@ Basic Usage
 
 ### Install a module
 
-    oz install [(+|-)[lib/only/prefix $prefix]] $mod
+    oz install [FLAGS] $mod [...]
 
-* *+prefix* add a prefix to the following modules as in: $prefix/$mod
+You can install multiple modules at a time, flags can be placed anywhere in the module list and take effect immediately. Modules can also be a URL in which case the corresponding entry will be set in $OZH/mod/repo.
 
-* *+lib* will add the following modules to the $OZH/libs file, unless they exist already.
+#### Flags
 
-* *-only* will inhibit sourcing the following modules after install. Hooks will not be executed, hence install scripts will not run.
+**+lib** will add the following modules to the $OZH/libs file, unless they exist already.
+**-only** will inhibit sourcing the following modules after install. Hooks will not be executed, hence install scripts will not run.
+**+prefix** *$prefix* will add a prefix to the following modules as in: $prefix/$mod
 
 #### Examples
 
