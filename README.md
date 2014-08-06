@@ -23,9 +23,9 @@ Basic Usage
 
     oz install [(+|-)[lib/only/prefix $prefix]] $mod
 
-* *+prefix * add a prefix to the following modules as in: $prefix/$mod
+* *+prefix* add a prefix to the following modules as in: $prefix/$mod
 
-* *+lib * will add the following modules to the $OZH/libs file, unless they exist already.
+* *+lib* will add the following modules to the $OZH/libs file, unless they exist already.
 
 * *-only* will inhibit sourcing the following modules after install. Hooks will not be executed, hence install scripts will not run.
 
@@ -43,7 +43,7 @@ Basic Usage
 #### Set $OZH/libs to 'core/core'
     oz set libs 'core/core'
 
-# Open $EDITOR for ...
+#### Open $EDITOR for ...
     oz edit libs
     oz edit shell/repo
 
