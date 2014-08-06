@@ -13,7 +13,7 @@ Modules always live in a *folder* and follow a simple *$mod/$mod* convention as 
 Installation
 ------------
 
-**( repo="https://raw.githubusercontent.com/hakt0r/ozh-core/master"; dest="./.config/ozh/core"; cd && mkdir -p "$dest" && echo "$repo" > "$dest/repo" && $(which wget) -O "$dest/core" "$repo/core" && OZH_INSTALL=core . "$dest/core" printenv && _install_core; )**
+**( repo="https://raw.githubusercontent.com/hakt0r/ozh-core/master"; cd && curl "$repo/core" > core; . ./core libs; oz printenv; oz install "$repo/core"; )**
 
 Basic Usage
 -----------
@@ -27,9 +27,9 @@ You can install multiple modules at a time, flags can be placed anywhere in the 
 
 #### Flags
 
-**+lib** will add the following modules to the $OZH/libs file, unless they exist already.
-**-only** will inhibit sourcing the following modules after install. Hooks will not be executed, hence install scripts will not run.
-**+prefix** *$prefix* will add a prefix to the following modules as in: $prefix/$mod
+  * **+lib** will add the following modules to the $OZH/libs file, unless they exist already.
+  * **-only** will inhibit sourcing the following modules after install. Hooks will not be executed, hence install scripts will not run.
+  * **+prefix** *$prefix* will add a prefix to the following modules as in: $prefix/$mod
 
 #### Examples
 
