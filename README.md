@@ -13,7 +13,7 @@ Modules always live in a *folder* and follow a simple *$mod/$mod* convention as 
 Installation
 ------------
 
-**( repo="https://raw.githubusercontent.com/hakt0r/ozh-core/master"; cd && curl "$repo/core" > core; . ./core libs; oz printenv; oz install "$repo/core"; )**
+**( repo="https://raw.githubusercontent.com/hakt0r/ozh-core/master"; cd; curl "$repo/core" > core; . ./core libs; oz printenv; oz install "$repo/core"; )**
 
 Basic Usage
 -----------
