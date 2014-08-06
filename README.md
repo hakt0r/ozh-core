@@ -13,7 +13,7 @@ Modules always live in a *folder* and follow a simple *$mod/$mod* convention as 
 Installation
 ------------
 
-    ( repo="https://raw.githubusercontent.com/hakt0r/ozh-core/master"; dest="./.config/ozh/core"; cd && mkdir -p "$dest" && echo "$repo" > "$dest/repo" && $(which wget) -O "$dest/core" "$repo/core" && OZH_INSTALL=core . "$dest/core" printenv && _install_core; )
+**( repo="https://raw.githubusercontent.com/hakt0r/ozh-core/master"; dest="./.config/ozh/core"; cd && mkdir -p "$dest" && echo "$repo" > "$dest/repo" && $(which wget) -O "$dest/core" "$repo/core" && OZH_INSTALL=core . "$dest/core" printenv && _install_core; )**
 
 Basic Usage
 -----------
@@ -31,8 +31,9 @@ Basic Usage
 
 #### Examples
 
-    oz install +lib shell # will be expanded to shell/shell
-    oz install +lib shell/abstracts
+    oz install +lib shell                 # will be expanded to shell/shell
+    oz install +lib shell/abstracts       # update a module asset
+    oz install http://url.to/repo/mod/mod # install mod from the webs
 
 ### View or edit ozh-stuff
 
@@ -42,9 +43,18 @@ Basic Usage
 #### Set $OZH/libs to 'core/core'
     oz set libs 'core/core'
 
-#### Open $EDITOR for ...
+# Open $EDITOR for ...
     oz edit libs
-    oz edit shell/motd
+    oz edit shell/repo
+
+
+### Hooks
+
+    oz hook run prompt
+    oz hook set prompt aa_date date
+    oz hook get prompt aa_date
+    oz hook edit prompt aa_date
+    oz hook del prompt aa_date
 
 License
 -------
