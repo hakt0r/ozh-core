@@ -1,7 +1,7 @@
 #!/bin/sh
 
 _copyright(){ echo "
-  ozh lightweight shell OZHtensions
+  ozh lightweight shell extensions
   2008-2014 - anx @ ulzq de (Sebastian Glaser)
   Licensed under GNU GPL v3"; }
 _license(){ echo "
