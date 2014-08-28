@@ -47,7 +47,7 @@ _sanitize_path(){
   for p in $(printf "$paths");do test -d "$p" && { match "$new" "^@$p\$" || { new="$new\n$p"; }; }; done
   export PATH=$(printf "$new" | tr '\n' : | sed 's/^.//;q'); }
 
-_install(){
+_install(){ (
   local repo; local url; local dir; local file; local dirfile; local banner
   local lib=false; local only=false; local prefix=false; local PREFIX; local mod="core"
   local stack="$stack$bred $R"
@@ -55,6 +55,11 @@ _install(){
   _retrieve(){
     match "$1" "@http" && { curl "$1" 2>/dev/null | _save_to "$2"; printf $(du $2|awk '{print $1}'); return $?; }
     { cat "$1" | _save_to "$2"; return $?; }; }
+  _install_asset(){
+    local stack="$stack$bred $R"
+    mkdir -p "$(dirname "$OZH/$dir/$1")"
+    printf "${bred}ia $R $stack $byellow$black $1 $R $bgreen$white$bold"
+    _retrieve "$(oz get "$dir/repo")/$1" "$OZH/$dir/$1" && _done || _fail; }
   while [ -n "$1" ] && { mod="$1"; shift; }; do
     match "$mod" "@.prefix" && { prefix=$( echo $mod|sed 's/-.*/false/;s/\+.*/true/'); $prefix && PREFIX=$1; shift; continue; }
     match "$mod" "@.lib"    && { lib=$( echo $mod|sed 's/-.*/false/;s/\+.*/true/'); continue; }
@@ -90,7 +95,7 @@ _install(){
       printf "$bgreen(%s)s" $(cat "$OZH/$dirfile" | wc -c); local OZH_INSTALL="$dirfile"; local  OZH_REQUIRE="$dirfile"; . "$OZH/$dirfile"
         is_set "_install_$file" && { printf h; _branch "deps"; _install_$file; printf "$banner"; }; }
     _done
-  done; return 0; }
+  done; return 0; ); }
 
 _require(){
   local mod="$1"; match "@$mod" "/" || mod="$mod/$mod"; mod="$OZH/$mod"
