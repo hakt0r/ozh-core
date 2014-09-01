@@ -32,20 +32,14 @@ homeof(){ local dir=; which getent >/dev/null 2>&1 && dir=$(getent passwd "$1" 2
 match(){ echo "@$1" | grep -q "$2"; }
 app_exists(){ which "$1" >/dev/null 2>&1; }
 
-# wrap around busybox commands
-[ -z "$OZH" ] && eval "$(
-  busybox 2>&1 |
-  busybox awk '
-    BEGIN{ RS=",";blacklist["[["]=1;blacklist["ls"]=1;blacklist["time"]=1}
-    {gsub(/[\t \n]/,"",$0)}
-    /\[\[/{p=1}
-    (p&&!blacklist[$1]==1&&$0!=""){
-      printf "alias %s=\"busybox %s\";",$0,$0}')"
-
 _sanitize_path(){
   local new=""; local paths="./bin\n$HOME/bin\n$OZH/bin\n/usr/local/bin\n/usr/local/sbin\n/usr/local/libexec\n/opt/bin\n/opt/sbin\n/opt/libexec\n/usr/bin\n/usr/sbin\n/usr/libexec\n/sbin\n/bin\n/libexec\n/system/bin\n/system/sbin\n/system/xbin\n$(echo $PATH|tr : '\n')"
   for p in $(printf "$paths");do test -d "$p" && { match "$new" "^@$p\$" || { new="$new\n$p"; }; }; done
   export PATH=$(printf "$new" | tr '\n' : | sed 's/^.//;q'); }
+
+_require(){
+  local mod="$1"; match "@$mod" "/" || mod="$mod/$mod"; mod="$OZH/$mod"
+  local OZH_REQUIRE="$mod"; [ -f "$mod" ] && . "$mod"; }
 
 _install(){ (
   local repo; local url; local dir; local file; local dirfile; local banner
@@ -92,24 +86,14 @@ _install(){ (
     $lib && { printf "${byellow}l"; grep -q "^$dirfile\$" "$OZH/libs" 2>/dev/null || echo "$dirfile" >> "$OZH/libs"; }
     # unless the only flag is raised, source the module, execute hooks
     $only && printf o || {
+      local OZH_INSTALL_HAS_ASSETS=false a=
       printf "$bgreen(%s)s" $(cat "$OZH/$dirfile" | wc -c); local OZH_INSTALL="$dirfile"; local  OZH_REQUIRE="$dirfile"; . "$OZH/$dirfile"
-        is_set "_install_$file" && { printf h; _branch "deps"; _install_$file; printf "$banner"; }; }
+        $OZH_INSTALL_HAS_ASSETS && {
+          _install_asset assets && cat $OZH/$dir/assets | while read a; do _install_asset "$a"; done; }
+        is_set "_install_$file" && {
+          printf h; _branch "deps"; _install_$file; printf "$banner"; }; }
     _done
   done; return 0; ); }
-
-_require(){
-  local mod="$1"; match "@$mod" "/" || mod="$mod/$mod"; mod="$OZH/$mod"
-  local OZH_REQUIRE="$mod"; [ -f "$mod" ] && . "$mod"; }
-
-[ -n "$OZH_INSTALL" ] && { _install_core(){
-  which curl >/dev/null 2>&1 ||
-    if [ -d "/system" ];then # arm-android
-      local o="/system/xbin"; [ -d "$o" ] || o=; o="/system/bin"; [ -d "$o" ] || o=
-      [ -z "$o" ] || { mount -o remount,rw /system;
-      # wget -O "/system/xbin/curl" "http://curl.haxx.se/gknw.net/7.34.0/dist-android/curl-7.34.0-rtmp-ssh2-ssl-zlib-static-bin-android.tar.gz";
-    }
-    fi
-  oz install +lib core/andcrs core/andlib; };  }
 
 _lib(){
   local libpath="$OZH/libs"; local cmd="_lib_$1"; shift;
@@ -179,5 +163,24 @@ ozh(){ test -z "$1" || {
 
 oz(){ local CMD=$1; shift; type "_$CMD" >/dev/null 2>&1 && "_$CMD" $@; }
 
-[ -z "$OZH_REQUIRE" ] && ozh $@
+# wrap around busybox commands
+[ -z "$OZH" ] && eval "$(
+  busybox 2>&1 |
+  busybox awk '
+    BEGIN{ RS=",";blacklist["[["]=1;blacklist["ls"]=1;blacklist["time"]=1}
+    {gsub(/[\t \n]/,"",$0)}
+    /\[\[/{p=1}
+    (p&&!blacklist[$1]==1&&$0!=""){
+      printf "alias %s=\"busybox %s\";",$0,$0}')"
 
+[ -n "$OZH_INSTALL" ] && { _install_core(){
+  which curl >/dev/null 2>&1 ||
+    if [ -d "/system" ];then # arm-android
+      local o="/system/xbin"; [ -d "$o" ] || o=; o="/system/bin"; [ -d "$o" ] || o=
+      [ -z "$o" ] || { mount -o remount,rw /system;
+      # wget -O "/system/xbin/curl" "http://curl.haxx.se/gknw.net/7.34.0/dist-android/curl-7.34.0-rtmp-ssh2-ssl-zlib-static-bin-android.tar.gz";
+    }
+    fi
+  oz install +lib core/andcrs core/andlib; };  }
+
+[ -z "$OZH_REQUIRE" ] && ozh $@
