@@ -41,6 +41,8 @@ _require(){
   local mod="$1"; match "@$mod" "/" || mod="$mod/$mod"; mod="$OZH/$mod"
   local OZH_REQUIRE="$mod"; [ -f "$mod" ] && . "$mod"; }
 
+_git_install(){ oz install "https://raw.githubusercontent.com/$1/ozh-$2/master/$2"; }
+
 _install(){ (
   local repo; local url; local dir; local file; local dirfile; local banner
   local lib=false; local only=false; local prefix=false; local PREFIX; local mod="core"
