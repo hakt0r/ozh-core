@@ -129,6 +129,7 @@ _env(){
   local p= d="$HOME/.config\n/data/local\n$HOME\n/etc"
   while [ -z "$OZH" -a -n "$d" ]; do p=$(printf "$d"|sed q); d=$(printf "$d"|sed 1d); [ -d "$p" ] && OZH="$p/ozh"; done
   [ -n "$OZH" -a ! -f $OZH -a -d "$OZH" ] || mkdir -p "$OZH"
+  [ -f "$OZH/path" ] && export PATH="$PATH:"$(cat "$OZH/path")
   _sanitize_path; }
 
 _printenv() { for k in OZH USER HOME PATH;do
