@@ -33,7 +33,7 @@ match(){ echo "@$1" | grep -q "$2"; }
 app_exists(){ which "$1" >/dev/null 2>&1; }
 
 _sanitize_path(){
-  local new=""; local paths="./bin\n$HOME/bin\n$OZH/bin\n/usr/local/bin\n/usr/local/sbin\n/usr/local/libexec\n/opt/bin\n/opt/sbin\n/opt/libexec\n/usr/bin\n/usr/sbin\n/usr/libexec\n/sbin\n/bin\n/libexec\n/system/bin\n/system/sbin\n/system/xbin\n$(echo $PATH|tr : '\n')"
+  local new=""; local paths="$HOME/bin\n$OZH/bin\n/usr/local/bin\n/usr/local/sbin\n/usr/local/libexec\n/opt/bin\n/opt/sbin\n/opt/libexec\n/usr/bin\n/usr/sbin\n/usr/libexec\n/sbin\n/bin\n/libexec\n/system/bin\n/system/sbin\n/system/xbin\n$(echo $PATH|tr : '\n')"
   for p in $(printf "$paths");do test -d "$p" && { match "$new" "^@$p\$" || { new="$new\n$p"; }; }; done
   export PATH=$(printf "$new" | tr '\n' : | sed 's/^.//;q'); }
 
