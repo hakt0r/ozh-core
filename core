@@ -174,7 +174,7 @@ oz(){ local CMD=$1; shift; type "_$CMD" >/dev/null 2>&1 && "_$CMD" $@; }
     {gsub(/[\t \n]/,"",$0)}
     /\[\[/{p=1}
     (p&&!blacklist[$1]==1&&$0!=""){
-      printf "alias B%s=\"busybox %s\";",$0,$0}')"
+      printf "B%s(){ busybox %s \"$1\" \"$2\" \"$3\" \"$4\"; }; ",$0,$0}')"
 
 [ -n "$OZH_INSTALL" ] && { _install_core(){
   which curl >/dev/null 2>&1 ||
