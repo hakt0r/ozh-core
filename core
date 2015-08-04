@@ -104,7 +104,7 @@ _lib(){
     _boot_widget_red(){ printf "$bred$(basename $1) $R"; }
     _boot_cat(){ eval "$(
       printf "_boot_widget_red %s\n" $@; echo 'printf "\x1b[100D"; '
-      printf "%s\n" $@ | awk '{ s=$0; sub(".*\/","",s)
+      printf "%s\n" $@ | awk '{ s=$0; sub(".*\\/","",s)
         printf "\n%s\n_boot_widget %s\n_%s(){\n",p,s,s; p=sprintf("\n}; _%s || echo %s;\n",s,s)
         while((getline line < $0 > 0 )){print line}}END{printf p}';)"; }
     _boot_cat $(printf "$OZH/%s\n" $(cat "$OZH/libs";); ); echo; }
@@ -136,8 +136,8 @@ _env(){
 
 _printenv() { for k in OZH USER HOME PATH;do
   printf "$bblack $k $R\x1b[100D\x1b[10C$bblue %s $R\n" $(eval echo -n \$$k); done
-  printf "$bblack LIBS $R\x1b[100D\x1b[9C$(cat $OZH/libs 2>/dev/null|sort|awk '
-    BEGIN{FS="/"}{ if(p!=$1){p=$1;printf " ["p"] ";s=""};if($2!=p){printf s$2;s=","}}')\n"; }
+  printf "$bblack LIBS $R\x1b[100D\x1b[9C$(cat $OZH/libs 2>/dev/null | sort | Bawk '
+    BEGIN{FS="\\/"}{ if(p!=$1){p=$1;printf " ["p"] ";s=""};if($2!=p){printf s$2;s=","}}')\n"; }
 
 _reload(){ . $OZH/core/core libs; }
 _update(){ oz install +only core; oz reload; }
@@ -174,7 +174,7 @@ oz(){ local CMD=$1; shift; type "_$CMD" >/dev/null 2>&1 && "_$CMD" $@; }
     {gsub(/[\t \n]/,"",$0)}
     /\[\[/{p=1}
     (p&&!blacklist[$1]==1&&$0!=""){
-      printf "alias %s=\"busybox %s\";",$0,$0}')"
+      printf "alias B%s=\"busybox %s\";",$0,$0}')"
 
 [ -n "$OZH_INSTALL" ] && { _install_core(){
   which curl >/dev/null 2>&1 ||

@@ -24,7 +24,7 @@ _license(){ echo "
 
 ## androcurses - 0004
 test -z "$TERM" || { E="\x1b["; R=$E"0m"; CL=$E"0E"$E"0J"; RN=$E"0m\n"; bold=$E"1m"; black=$E"30m"; red=$E"31m"; green=$E"32m"; yellow=$E"33m"; blue=$E"34m"; magenta=$E"35m"; cyan=$E"36m"; white=$E"37m"; bblack=$E"40m";bred=$E"41m";bgreen=$E"42m";byellow=$E"43m";bblue=$E"44m";bmagenta=$E"45m";bcyan=$E"46m";bwhite=$E"47m";}
-echo | busybox pipe_progress >/dev/null 2>&1 && { pipe_progress(){ printf "$bgreen $R" >&2; cat - | busybox pipe_progress; }; } || { pipe_progress(){ awk '{print $0;c+=length($0);if(l<c%1024){l=c;printf "'"$bgreen $R"'"|"cat >&2"}}'; }; }
+echo | busybox pipe_progress >/dev/null 2>&1 && { pipe_progress(){ printf "$bgreen $R" >&2; cat - | busybox pipe_progress; }; } || { pipe_progress(){ Bawk '{print $0;c+=length($0);if(l<c%1024){l=c;printf "'"$bgreen $R"'"|"cat >&2"}}'; }; }
 is_set(){ type "$1" >/dev/null 2>&1; }
 _done(){ printf "$R\x1b[9999G\x1b[4D $bgreen$black ok $RN" >&2; }
 _fail(){ printf "$R\x1b[9999G\x1b[6D $bred fail $RN" >&2; }
