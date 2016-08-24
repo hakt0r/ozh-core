@@ -136,7 +136,7 @@ _env(){
 
 _printenv() { for k in OZH USER HOME PATH;do
   printf "$bblack $k $R\x1b[100D\x1b[10C$bblue %s $R\n" $(eval echo -n \$$k); done
-  printf "$bblack LIBS $R\x1b[100D\x1b[9C$(cat $OZH/libs 2>/dev/null | sort | Bawk '
+  printf "$bblack LIBS $R\x1b[100D\x1b[9C$(cat $OZH/libs 2>/dev/null | sort | busybox awk '
     BEGIN{FS="\\/"}{ if(p!=$1){p=$1;printf " ["p"] ";s=""};if($2!=p){printf s$2;s=","}}')\n"; }
 
 _reload(){ . $OZH/core/core libs; }
