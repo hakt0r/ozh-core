@@ -106,8 +106,8 @@ _install(){ (
 _lib(){
   local libpath="$OZH/libs"; local cmd="_lib_$1"; shift;
   _lib_boot(){
-    _boot_widget(){ printf "$bold$bgreen$black$1 $R"; }
-    _boot_widget_red(){ printf "$bred$black$(basename $1) $R"; }
+    _boot_widget(){ printf "$bold$green$1$R."; }
+    _boot_widget_red(){ printf "$bold$red$(basename $1)$R."; }
     _boot_cat(){ eval "$(
       printf "_boot_widget_red %s\n" $@; echo 'printf "\x1b[100D"; '
       printf "%s\n" $@ | awk '{ s=$0; sub(".*\\/","",s)
