@@ -164,7 +164,7 @@ _help(){ opt="$bblack$white"; arg="$bblue"; cmd="$byellow$black"
 
 ozh(){ test -z "$1" || {
   test -d "$OZH" 2>/dev/null || _env
-  [ -f "$OZH/libs" ] && { _lib boot; }
+  [ -f "$OZH/libs" ] && { _lib boot && oz hook run init/post; }
   local CMD=$1; shift;
   type "_$CMD" >/dev/null 2>&1 && "_$CMD" $@ || {
   type "$CMD"  >/dev/null 2>&1 && "$CMD"  $@; }
