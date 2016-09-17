@@ -3,7 +3,7 @@ ozh-core
 **ozh *lightweight shell extensions***
 
 * ozh reboot - core module
-* 2008-2014 - anx @ ulzq de (Sebastian Glaser)
+* 2008-2016 - anx @ ulzq de (Sebastian Glaser)
 * Licensed under GNU GPL v3
 
 ozh is a package manager for various un+x-style shells. It's aim is to sanitize the **environment** and provide tools to install and depend upon **modules**.
@@ -23,12 +23,15 @@ Then source the core for testing:
 
 If this **works** you should be able to install new modules like this:
 
-    oz install https://raw.githubusercontent.com/hakt0r/ozh-shell/master/shell
+    oz install @hakt0r/shell
+    oz install +prefix @hakt0r shell sys net
+    oz install https://secure-url/to/your/mod/main
+    oz install /absolute/path/to/your/mod/main
 
 You can now safely add ozh to your shell profile:
 
-    echo ". ~/.config/ozh/core/core libs" >> $HOME/.bashrc 
-    echo ". ~/.config/ozh/core/core libs" >> $HOME/.zhrc 
+    echo ". ~/.config/ozh/core/core libs" >> $HOME/.bashrc
+    echo ". ~/.config/ozh/core/core libs" >> $HOME/.zhrc
 
 Basic Usage
 -----------

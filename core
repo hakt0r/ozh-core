@@ -2,7 +2,7 @@
 
 _copyright(){ echo "
   ozh lightweight shell extensions
-  2008-2014 - anx @ ulzq de (Sebastian Glaser)
+  2008-2016 - anx @ ulzq de (Sebastian Glaser)
   Licensed under GNU GPL v3"; }
 _license(){ echo "
   ozh is free software; you can redistribute it and/or modify
@@ -29,16 +29,16 @@ _task(){ local h="$1"; shift; printf "$byellow$black$bold $h $R $*" >&2; }
 _branch(){ printf "$R\x1b[9999G\x1b[$(( $(printf "$1"|wc -c) + 2))D $byellow$black $1 $RN" >&2; }
 echo | busybox pipe_progress >/dev/null 2>&1 && { pipe_progress(){ printf "$bgreen $R" >&2; cat - | busybox pipe_progress; }; } || { pipe_progress(){ awk '{print $0;c+=length($0);if(l<c%1024){l=c;printf "'"$bgreen $R"'"|"cat >&2"}}'; }; }
 homeof(){ local dir=; which getent >/dev/null 2>&1 && dir=$(getent passwd "$1" 2>/dev/null | cut -d: -f6); [ -z "$dir" -a "$1" = "root" -a -d /root ] && dir="/root"; [ -z "$dir" -a -d "/home/$1" ] && dir="/home/$1"; echo $dir; }
-match(){ echo "@$1" | grep -q "$2"; }
+match(){ echo "$1" | grep -q "$2"; }
 app_exists(){ which "$1" >/dev/null 2>&1; }
 
 _sanitize_path(){
   local new=""; local paths="$HOME/bin\n$OZH/bin\n/usr/local/bin\n/usr/local/sbin\n/usr/local/libexec\n/opt/bin\n/opt/sbin\n/opt/libexec\n/usr/bin\n/usr/sbin\n/usr/libexec\n/sbin\n/bin\n/libexec\n/system/bin\n/system/sbin\n/system/xbin\n$(echo $PATH|tr : '\n')"
-  for p in $(printf "$paths");do test -d "$p" && { match "$new" "^@$p\$" || { new="$new\n$p"; }; }; done
+  for p in $(printf "$paths");do test -d "$p" && { match "$new" "^$p\$" || { new="$new\n$p"; }; }; done
   export PATH=$(printf "$new" | tr '\n' : | sed 's/^.//;q'); }
 
 _require(){
-  local mod="$1"; match "@$mod" "/" || mod="$mod/$mod"; mod="$OZH/$mod"
+  local mod="$1"; match "$mod" "/" || mod="$mod/$mod"; mod="$OZH/$mod"
   local OZH_REQUIRE="$mod"; [ -f "$mod" ] && . "$mod"; }
 
 _git_install(){ oz install "https://raw.githubusercontent.com/$1/ozh-$2/master/$2"; }
@@ -49,24 +49,30 @@ _install(){ (
   local stack="$stack$bred $R"
   _save_to(){ ( pipe_progress > "$1" ) 2>&1 | tr -d '\n' | tr . ' '; }
   _retrieve(){
-    match "$1" "@http" && { curl "$1" 2>/dev/null | _save_to "$2"; printf $(du $2|awk '{print $1}'); return $?; }
+    match "$1" "^http" && { curl "$1" 2>/dev/null | _save_to "$2"; printf $(du $2|awk '{print $1}'); return $?; }
     { cat "$1" | _save_to "$2"; return $?; }; }
   _install_asset(){
     local stack="$stack$bred $R"
     mkdir -p "$(dirname "$OZH/$dir/$1")"
     printf "${bred}ia $R $stack $byellow$black $1 $R $bgreen$white$bold"
     _retrieve "$(oz get "$dir/repo")/$1" "$OZH/$dir/$1" && _done || _fail; }
+  _is_plus_switch(){ echo $mod|sed 's/-.*/false/;s/\+.*/true/'; }
   while [ -n "$1" ] && { mod="$1"; shift; }; do
-    match "$mod" "@.prefix" && { prefix=$( echo $mod|sed 's/-.*/false/;s/\+.*/true/'); $prefix && PREFIX=$1; shift; continue; }
-    match "$mod" "@.lib"    && { lib=$( echo $mod|sed 's/-.*/false/;s/\+.*/true/'); continue; }
-    match "$mod" "@.only"   && { only=$(echo $mod|sed 's/-.*/false/;s/\+.*/true/'); continue; }
+    match "@$mod" "@[-+]prefix" && { prefix=$(_is_plus_switch); $prefix && PREFIX=$1 || PREFIX=; shift; continue; }
+    match "@$mod" "@[-+]lib"    && { lib=$(_is_plus_switch); continue; }
+    match "@$mod" "@[-+]only"   && { only=$(_is_plus_switch); continue; }
     file=$(basename $mod); $prefix && mod="$PREFIX/$mod"
-    match "$mod" "http" \
-      && {
-        url="$mod"; dir=$(basename $mod)
-        mkdir -p "$OZH/$dir"                                 # create module dir
-        echo "$mod" | sed 's/\/[^\/]*$//' > "$OZH/$dir/repo" # add repo entry
-    } || { # filesystem handler
+    if match "$mod" "^@[^/]\+/.*"
+    then
+      user=$(echo $mod|awk '{gsub("@"," ",$0);gsub("/"," ",$0);print $1}')
+      mod="https://raw.githubusercontent.com/${user}/ozh-${file}/master/${file}"
+    fi
+    if match "$mod" "http"
+    then
+      url="$mod"; dir=$(basename $mod)
+      mkdir -p "$OZH/$dir"                                 # create module dir
+      echo "$mod" | sed 's/\/[^\/]*$//' > "$OZH/$dir/repo" # add repo entry
+    else # filesystem handler
       match "$mod" "/" || mod="$mod/$mod"
       dir=$(basename $(dirname $mod))
       [ -f "$OZH/$dir/repo" ] \
@@ -78,7 +84,7 @@ _install(){ (
             dirname "$mod" > "$OZH/$dir/repo" # add repo entry
             cat "$OZH/$dir/repo"
            } \
-          || { printf "not a mod, not in repo: $dir $file $mod"; _fail; continue; }; }; }
+          || { printf "not a mod, not in repo: $dir $file $mod"; _fail; continue; }; }; fi
     dirfile="$dir/$file"
     # cache and print banner
     banner="$(printf "${bred}i$($lib && printf l || printf ' '; $only && printf o || printf ' ')$R $stack $byellow$black $file $R \x1b[100D\x1b[30C$bgreen$white$bold")"; printf "$banner "
@@ -167,14 +173,14 @@ ozh(){ test -z "$1" || {
 oz(){ local CMD=$1; shift; type "_$CMD" >/dev/null 2>&1 && "_$CMD" $@; }
 
 # wrap around busybox commands
-[ -z "$OZH" ] && eval "$(
+which busybox >/dev/null 2>&1 && { Bawk 'BEGIN{exit(0)}' >/dev/null 2>&1 || eval "$(
   busybox 2>&1 |
   busybox awk '
-    BEGIN{ RS=",";blacklist["[["]=1;blacklist["ls"]=1;blacklist["time"]=1}
-    {gsub(/[\t \n]/,"",$0)}
-    /\[\[/{p=1}
-    (p&&!blacklist[$1]==1&&$0!=""){
-      printf "B%s(){ busybox %s \"$1\" \"$2\" \"$3\" \"$4\"; }; ",$0,$0}')"
+  BEGIN{ RS=",";blacklist["[["]=1;blacklist["ls"]=1;blacklist["time"]=1}
+  {gsub(/[\t \n]/,"",$0)}
+  /\[\[/{p=1}
+  (p&&!blacklist[$1]==1&&$0!=""){
+    printf "B%s(){ busybox %s \"$1\" \"$2\" \"$3\" \"$4\"; }; ",$0,$0}')"; }
 
 [ -n "$OZH_INSTALL" ] && { _install_core(){
   which curl >/dev/null 2>&1 ||
