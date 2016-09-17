@@ -58,7 +58,7 @@ _install(){ (
     _retrieve "$(oz get "$dir/repo")/$1" "$OZH/$dir/$1" && _done || _fail; }
   _is_plus_switch(){ echo $mod|sed 's/-.*/false/;s/\+.*/true/'; }
   while [ -n "$1" ] && { mod="$1"; shift; }; do
-    match "@$mod" "@[-+]prefix" && { prefix=$(_is_plus_switch); $prefix && PREFIX=$1 || PREFIX=; shift; continue; }
+    match "@$mod" "@[-+]prefix" && { prefix=$(_is_plus_switch); $prefix && { PREFIX=$1; shift; } || PREFIX=; continue; }
     match "@$mod" "@[-+]lib"    && { lib=$(_is_plus_switch); continue; }
     match "@$mod" "@[-+]only"   && { only=$(_is_plus_switch); continue; }
     file=$(basename $mod); $prefix && mod="$PREFIX/$mod"
@@ -124,7 +124,7 @@ _lib(){
 _hook(){
   local lib="$OZH/hook" cmd="_hook_$1"; shift;
   local hook="$1" name="$2" cache="$lib/$1/.cache" dir="$lib/$1" file="$lib/$1/$2"; shift 2 2>/dev/null
-  _hook_run(){ [ ! -f "$cache" ] && { mkdir -p "$dir"; cat "$dir/"* > "$cache"; }; . "$cache" $@; }
+  _hook_run(){ [ ! -f "$cache" ] && { mkdir -p "$dir"; cat "$dir/"* 2>/dev/null >"$cache"; }; . "$cache" $@; }
   _hook_get(){  cat "$file"; }
   _hook_set(){  mkdir -p "$dir"; rm "$cache" 2>/dev/null; echo "$@" > "$file"; }
   _hook_del(){  mkdir -p "$dir"; rm "$cache" 2>/dev/null; rm "$file" 2>/dev/null; }
