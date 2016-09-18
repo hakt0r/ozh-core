@@ -57,6 +57,7 @@ _install(){ (
     printf "${bred}ia $R $stack $byellow$black $1 $R $bgreen$white$bold"
     _retrieve "$(oz get "$dir/repo")/$1" "$OZH/$dir/$1" && _done || _fail; }
   _is_plus_switch(){ echo $mod|sed 's/-.*/false/;s/\+.*/true/'; }
+  rm -f "$OZH/module.cache"
   while [ -n "$1" ] && { mod="$1"; shift; }; do
     match "@$mod" "@[-+]prefix" && { prefix=$(_is_plus_switch); $prefix && { PREFIX=$1; shift; } || PREFIX=; continue; }
     match "@$mod" "@[-+]lib"    && { lib=$(_is_plus_switch); continue; }
@@ -75,7 +76,7 @@ _install(){ (
     else # filesystem handler
       match "$mod" "/" || mod="$mod/$mod"
       dir=$(basename $(dirname $mod))
-      [ -f "$OZH/$dir/repo" ] \
+      [ -f "$OZH/$dir/repo" -a ! -f "$mod" ] \
         && { url="$(cat "$OZH/$dir/repo")/$file"; } \
         || { [ -d "$(dirname $mod)" -a -f "$mod" ] \
           && {
@@ -105,14 +106,17 @@ _install(){ (
 
 _lib(){
   local libpath="$OZH/libs"; local cmd="_lib_$1"; shift;
+  local cachefile="$OZH/module.cache";
   _lib_boot(){
     _boot_widget(){ printf "$bold$green$1$R."; }
     _boot_widget_red(){ printf "$bold$red$(basename $1)$R."; }
-    _boot_cat(){ eval "$(
+    _boot_cat(){ local script="$(
       printf "_boot_widget_red %s\n" $@; echo 'printf "\x1b[100D"; '
       printf "%s\n" $@ | awk '{ s=$0; sub(".*\\/","",s)
         printf "\n%s\n_boot_widget %s\n_%s(){\n",p,s,s; p=sprintf("\n}; _%s || echo %s;\n",s,s)
-        while((getline line < $0 > 0 )){print line}}END{printf p}';)"; }
+        while((getline line < $0 > 0 )){print line}}END{printf p}';)"
+      printf "%s" "$script" > "$cachefile"; eval "$script"; }
+    [ -f "$cachefile" ] && . "$cachefile" ||
     _boot_cat $(printf "$OZH/%s\n" $(cat "$OZH/libs";); ); echo; }
   _lib_add(){  grep -q  "^$1\$" "$libpath" 2>/dev/null || echo "$1" >> "$libpath"; }
   _lib_del(){  echo "$(grep -v "^$1\$" "$libpath")" > "$libpath"; }
