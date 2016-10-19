@@ -155,7 +155,7 @@ _printenv() { for k in OZH USER HOME PATH;do
   printf "$bblack LIBS $R\x1b[100D\x1b[9C$(cat $OZH/libs 2>/dev/null | sort | busybox awk '
     BEGIN{FS="\\/"}{ if(p!=$1){p=$1;printf " ["p"] ";s=""};if($2!=p){printf s$2;s=","}}')\n"; }
 
-_reload(){ . $OZH/core/core libs; }
+_reload(){ OZH_BOOT=true . $OZH/core/core libs; }
 _update(){ oz install +only core; oz reload; }
 _set(){ local k=$1;shift; [ -d "$OZH" ] && { echo $@ > "$OZH/$k"; }; }
 _get(){ local k=$1;shift; [ -d "$OZH" -a -f "$OZH/$k" ] && cat "$OZH/$k"; }
