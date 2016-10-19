@@ -108,8 +108,10 @@ _lib(){
   local libpath="$OZH/libs"; local cmd="_lib_$1"; shift;
   local cachefile="$OZH/module.cache";
   _lib_boot(){
-    _boot_widget(){ printf "$bold$green$1$R."; }
-    _boot_widget_red(){ printf "$bold$red$(basename $1)$R."; }
+    [ -n "$OZH_BOOT" ] && {
+      _boot_widget(){ printf "$bold$green$1$R." >&2; }
+      _boot_widget_red(){ printf "$bold$red$(basename $1)$R." >&2; }
+    } || { _boot_widget(){ printf ''; }; _boot_widget_red(){ printf ''; }; }
     _boot_cat(){ local script="$(
       printf "_boot_widget_red %s\n" $@; echo 'printf "\x1b[100D"; '
       printf "%s\n" $@ | awk '{ s=$0; sub(".*\\/","",s)
@@ -117,7 +119,11 @@ _lib(){
         while((getline line < $0 > 0 )){print line}}END{printf p}';)"
       printf "%s" "$script" > "$cachefile"; eval "$script"; }
     [ -f "$cachefile" ] && . "$cachefile" ||
-    _boot_cat $(printf "$OZH/%s\n" $(cat "$OZH/libs";); ); echo; }
+    _boot_cat $(printf "$OZH/%s\n" $(cat "$OZH/libs";); );
+    [ -n "$OZH_BOOT" ] && {
+      echo; oz hook run init/post
+      unset $OZH_BOOT
+    } || return 0; }
   _lib_add(){  grep -q  "^$1\$" "$libpath" 2>/dev/null || echo "$1" >> "$libpath"; }
   _lib_del(){  echo "$(grep -v "^$1\$" "$libpath")" > "$libpath"; }
   _lib_path(){ echo "$libpath"; }
@@ -168,7 +174,7 @@ _help(){ opt="$bblack$white"; arg="$bblue"; cmd="$byellow$black"
 
 ozh(){ test -z "$1" || {
   test -d "$OZH" 2>/dev/null || _env
-  [ -f "$OZH/libs" ] && { _lib boot && oz hook run init/post; }
+  [ -f "$OZH/libs" ] && { _lib boot; }
   local CMD=$1; shift;
   type "_$CMD" >/dev/null 2>&1 && "_$CMD" $@ || {
   type "$CMD"  >/dev/null 2>&1 && "$CMD"  $@; }

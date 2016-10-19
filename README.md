@@ -13,13 +13,11 @@ Modules always live in a *folder* and follow a simple *$mod/$mod* convention as 
 Installation
 ------------
 
-    ( tmp=$(mktemp); repo="https://raw.githubusercontent.com/hakt0r/ozh-core/master";
-      cd; curl "$repo/core" > "$tmp"; . "$tmp" libs;
-      oz printenv; oz install "$repo/core"; rm "$tmp"; )
-
-Then source the core for testing:
-
-    . ~/.config/ozh/core/core libs
+    cd; mkdir -p .config/ozh/core; cd .config/ozh/core;
+    curl "https://raw.githubusercontent.com/hakt0r/ozh-core/master/core" > core;
+    . core libs;
+    oz printenv;
+    oz install @hakt0r/core
 
 If this **works** you should be able to install new modules like this:
 
@@ -30,8 +28,8 @@ If this **works** you should be able to install new modules like this:
 
 You can now safely add ozh to your shell profile:
 
-    echo ". ~/.config/ozh/core/core libs" >> $HOME/.bashrc
-    echo ". ~/.config/ozh/core/core libs" >> $HOME/.zhrc
+    echo "OZH_BOOT=true . ~/.config/ozh/core/core libs" >> $HOME/.bashrc
+    echo "OZH_BOOT=true . ~/.config/ozh/core/core libs" >> $HOME/.zhrc
 
 Basic Usage
 -----------
