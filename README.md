@@ -15,7 +15,7 @@ Installation
 
     cd; mkdir -p .config/ozh/core; cd .config/ozh/core;
     curl "https://raw.githubusercontent.com/hakt0r/ozh-core/master/core" > core;
-    . core libs;
+    . ./core libs;
     oz printenv;
     oz install @hakt0r/core
 
@@ -29,7 +29,7 @@ If this **works** you should be able to install new modules like this:
 You can now safely add ozh to your shell profile:
 
     echo "OZH_BOOT=true . ~/.config/ozh/core/core libs" >> $HOME/.bashrc
-    echo "OZH_BOOT=true . ~/.config/ozh/core/core libs" >> $HOME/.zhrc
+    echo "OZH_BOOT=true . ~/.config/ozh/core/core libs" >> $HOME/.zshrc
 
 Basic Usage
 -----------
