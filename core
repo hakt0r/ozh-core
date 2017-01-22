@@ -173,7 +173,7 @@ _help(){ opt="$bblack$white"; arg="$bblue"; cmd="$byellow$black"
   $cmd env/printenv   $RN"; }
 
 ozh(){ test -z "$1" || {
-  test -d "$OZH" 2>/dev/null || _env
+  test -d "$OZH" 2>/dev/null && ( test -n "$OZH_BOOT" && _env; ) || _env
   [ -f "$OZH/libs" ] && { _lib boot; }
   local CMD=$1; shift;
   type "_$CMD" >/dev/null 2>&1 && "_$CMD" $@ || {
