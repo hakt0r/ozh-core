@@ -87,7 +87,8 @@ _install(){ (
           || { printf "not a mod, not in repo: $dir $file $mod"; _fail; continue; }; }; fi
     dirfile="$dir/$file"
     # cache and print banner
-    banner="$(printf "${bred}i$($lib && printf l || printf ' '; $only && printf o || printf ' ')$R $stack $byellow$black $file $R \x1b[100D\x1b[30C$bgreen$white$bold")"; printf "$banner "
+    banner="$(printf "${bred}i$($lib && printf l || printf ' '; $only && printf o || printf ' ')$R $stack $byellow$black $file $R \x1b[100D\x1b[30C$bgreen$white$bold")"
+    printf "$banner "
     # fetch the module
     _retrieve "$url" "$OZH/$dirfile" || { _fail; continue; }
     # if the lib flag is raised, add module to $OZH/libs
@@ -112,7 +113,7 @@ _lib(){
       _boot_widget_red(){ printf "$bold$red$(basename $1)$R." >&2; }
     } || { _boot_widget(){ printf ''; }; _boot_widget_red(){ printf ''; }; }
     _boot_cat(){ local script="$(
-      printf "_boot_widget_red %s\n" $@; echo 'printf "\x1b[100D"; '
+      [ -n "$OZH_BOOT" ] && printf "_boot_widget_red %s\n" $@ && echo 'printf "\x1b[100D"; '
       printf "%s\n" $@ | awk '{ s=$0; sub(".*\\/","",s)
         printf "\n%s\n_boot_widget %s\n_%s(){\n",p,s,s; p=sprintf("\n}; _%s || echo %s;\n",s,s)
         while((getline line < $0 > 0 )){print line}}END{printf p}';)"
