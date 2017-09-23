@@ -111,7 +111,7 @@ _lib(){
     [ -n "$OZH_BOOT" ] && {
       _boot_widget(){ printf "$bold$green$1$R." >&2; }
       _boot_widget_red(){ printf "$bold$red$(basename $1)$R." >&2; }
-    } || { _boot_widget(){ printf ''; }; _boot_widget_red(){ printf ''; }; }
+    } || { _boot_widget(){ :; }; _boot_widget_red(){ :; }; }
     _boot_cat(){ local script="$(
       [ -n "$OZH_BOOT" ] && printf "_boot_widget_red %s\n" $@ && echo 'printf "\x1b[100D"; '
       printf "%s\n" $@ | awk '{ s=$0; sub(".*\\/","",s)
@@ -182,6 +182,8 @@ ozh(){ test -z "$1" || {
   return $?; }; }
 
 oz(){ local CMD=$1; shift; type "_$CMD" >/dev/null 2>&1 && "_$CMD" $@; }
+
+test -z "$PS1" && export OZH_BOOT=
 
 # wrap around busybox commands
 which busybox >/dev/null 2>&1 && { Bawk 'BEGIN{exit(0)}' >/dev/null 2>&1 || eval "$(
