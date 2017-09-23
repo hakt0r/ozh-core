@@ -183,6 +183,7 @@ ozh(){ test -z "$1" || {
 
 oz(){ local CMD=$1; shift; type "_$CMD" >/dev/null 2>&1 && "_$CMD" $@; }
 
+test -n "$OZH_BOOT" && export OZH_REQUIRE=boot
 test -z "$PS1" && export OZH_BOOT=
 
 # wrap around busybox commands
