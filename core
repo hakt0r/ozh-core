@@ -187,13 +187,14 @@ test -z "$PS1" && export OZH_BOOT=
 
 # wrap around busybox commands
 which busybox >/dev/null 2>&1 && { Bawk 'BEGIN{exit(0)}' >/dev/null 2>&1 || eval "$(
-  busybox 2>&1 |
+  busybox --list-full 2>&1 |
   busybox awk '
-  BEGIN{ RS=",";blacklist["[["]=1;blacklist["ls"]=1;blacklist["time"]=1}
-  {gsub(/[\t \n-]/,"",$0)}
-  /\[\[/{p=1}
-  (p&&!blacklist[$1]==1&&$0!=""){
-    printf "unset B%s; B%s(){ busybox %s \"$1\" \"$2\" \"$3\" \"$4\"; };",$0,$0,$0}')"; }
+  BEGIN{blacklist["[["]=1;blacklist["["]=1;blacklist["ls"]=1;blacklist["time"]=1}
+  {gsub(/[\t \n.-]/,"",$0)}
+  {gsub(/.*\//,"",$0)}
+  (!blacklist[$1]==1&&$0!=""){
+    printf "unset B%s; B%s(){ busybox %s \"$1\" \"$2\" \"$3\" \"$4\"; };",$0,$0,$0,$0
+  }')"; }
 
 [ -n "$OZH_INSTALL" ] && { _install_core(){
   which curl >/dev/null 2>&1 ||
